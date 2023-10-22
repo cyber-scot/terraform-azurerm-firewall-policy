@@ -6,7 +6,6 @@ module "rg" {
   tags     = local.tags
 }
 
-
 module "law" {
   source = "cyber-scot/log-analytics-workspace/azurerm"
 
@@ -16,7 +15,7 @@ module "law" {
 
   create_new_workspace       = true
   name                       = "law-${var.short}-${var.loc}-${var.env}-01"
-  sku                        = "PerNode"
+  sku                        = "PerGB2018"
   retention_in_days          = "30"
   daily_quota_gb             = "0.5"
   internet_ingestion_enabled = false
@@ -30,8 +29,7 @@ module "firewall_policy" {
   location = module.rg.rg_location
   tags     = module.rg.rg_tags
 
-  name          = "fwpol-${var.short}-${var.loc}-${var.env}-01"
-  identity_type = "SystemAssigned"
+  name = "fwpol-${var.short}-${var.loc}-${var.env}-01"
 
   dns = [
     {
@@ -40,25 +38,18 @@ module "firewall_policy" {
     }
   ]
 
-  intrusion_detection = [
-    {
-      mode           = "Alert"
-      private_ranges = ["10.0.0.0/16"]
-    }
-  ]
-
   insights = [
     {
-
-      retention_in_days = "30"
+      default_log_analytics_workspace_id = module.law.law_id
+      retention_in_days                  = "30"
     }
   ]
 
   explict_proxy = [
     {
       enabled    = true
-      http_port  = 80
-      https_port = 443
+      http_port  = 8080
+      https_port = 8443
     }
   ]
 
@@ -66,13 +57,6 @@ module "firewall_policy" {
     {
       fqdns        = ["example.com"]
       ip_addresses = ["203.0.113.0"]
-    }
-  ]
-
-  tls_certificate = [
-    {
-      key_vault_secret_id = "https://myvault.vault.azure.net/secrets/mysecret/abc123"
-      name                = "my-tls-certificate"
     }
   ]
 }

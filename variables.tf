@@ -1,3 +1,15 @@
+variable "auto_learn_private_ranges_enabled" {
+  type        = bool
+  description = "Whether the auto learn feature is enabled on the firewall policy"
+  default     = false
+}
+
+variable "base_policy_id" {
+  type        = string
+  description = "The base policy id if specified"
+  default     = null
+}
+
 variable "dns" {
   description = "The DNS block within the firewall policy"
   type = list(object({
@@ -79,9 +91,27 @@ variable "name" {
   description = "The name for the resources"
 }
 
+variable "private_ip_ranges" {
+  type        = list(string)
+  description = "A list of IP addresses for the private policy"
+  default     = null
+}
+
 variable "rg_name" {
   type        = string
   description = "The name of the resource group the Azure firewall resides within"
+}
+
+variable "sku" {
+  type        = string
+  description = "The sku of the policy, should match firewall, defaults to standard"
+  default     = "Standard"
+}
+
+variable "sql_redirect_allowed" {
+  type        = bool
+  description = "Whether SQL redirect is allowed in the policy"
+  default     = false
 }
 
 variable "tags" {
@@ -90,7 +120,7 @@ variable "tags" {
 }
 
 variable "threat_intelligence_allowlist" {
-  description = "The threat intelligence sllowlist block within the firewall policy"
+  description = "The threat intelligence allowlist block within the firewall policy"
   type = list(object({
     fqdns        = optional(list(string))
     ip_addresses = optional(list(string))
