@@ -102,42 +102,6 @@ variable "rg_name" {
   description = "The name of the resource group the Azure firewall resides within"
 }
 
-variable "sku" {
-  type        = string
-  description = "The sku of the policy, should match firewall, defaults to standard"
-  default     = "Standard"
-}
-
-variable "sql_redirect_allowed" {
-  type        = bool
-  description = "Whether SQL redirect is allowed in the policy"
-  default     = false
-}
-
-variable "tags" {
-  type        = map(string)
-  description = "The tags for the resources"
-}
-
-variable "threat_intelligence_allowlist" {
-  description = "The threat intelligence allowlist block within the firewall policy"
-  type = list(object({
-    fqdns        = optional(list(string))
-    ip_addresses = optional(list(string))
-  }))
-  default = null
-}
-
-variable "tls_certificate" {
-  description = "The tls_certificate block within the firewall policy"
-  type = list(object({
-    key_vault_secret_id = string
-    name                = string
-  }))
-  default = null
-}
-
-
 variable "rule_collection_groups" {
   description = "The rule collection groups to be assigned to the firewall polices"
   type = list(object({
@@ -200,4 +164,39 @@ variable "rule_collection_groups" {
       })))
     })))
   }))
+}
+
+variable "sku" {
+  type        = string
+  description = "The sku of the policy, should match firewall, defaults to standard"
+  default     = "Standard"
+}
+
+variable "sql_redirect_allowed" {
+  type        = bool
+  description = "Whether SQL redirect is allowed in the policy"
+  default     = false
+}
+
+variable "tags" {
+  type        = map(string)
+  description = "The tags for the resources"
+}
+
+variable "threat_intelligence_allowlist" {
+  description = "The threat intelligence allowlist block within the firewall policy"
+  type = list(object({
+    fqdns        = optional(list(string))
+    ip_addresses = optional(list(string))
+  }))
+  default = null
+}
+
+variable "tls_certificate" {
+  description = "The tls_certificate block within the firewall policy"
+  type = list(object({
+    key_vault_secret_id = string
+    name                = string
+  }))
+  default = null
 }

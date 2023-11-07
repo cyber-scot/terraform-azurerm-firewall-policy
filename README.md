@@ -104,57 +104,95 @@ resource "azurerm_firewall_policy" "firewall_policy" {
   }
 }
 
-resource "azurerm_firewall_policy_rule_collection_group" "rule_collection_group" {
-  name               = var.default_rule_collection_group_name != null ? var.default_rule_collection_group_name : "fwrcg-${var.name}"
-  firewall_policy_id = azurerm_firewall_policy.firewall_policy.id
-  priority           = var.default_rule_collection_group_priority
+resource "azurerm_firewall_policy_rule_collection_group" "rule_collection_groups" {
+
+  for_each           = { for k, v in var.rule_collection_groups : k => v if v.create_and_attach_rule_collection == true }
+  name               = each.value.name
+  firewall_policy_id = each.value.firewall_policy_id != null ? each.value.firewall_policy_id : azurerm_firewall_policy.firewall_policy.id
+  priority           = each.value.priority
 
 
 
-  application_rule_collection {
-    name     = "app_rule_collection1"
-    priority = 500
-    action   = "Deny"
-    rule {
-      name = "app_rule_collection1_rule1"
-      protocols {
-        type = "Http"
-        port = 80
+  dynamic "application_rule_collection" {
+    for_each = each.value.application_rule_collection
+    content {
+      name     = application_rule_collection.value.name
+      action   = application_rule_collection.value.action
+      priority = application_rule_collection.value.priority
+
+
+      dynamic "rule" {
+        for_each = application_rule_collection.value.rule
+        content {
+          name                  = rule.value.name
+          description           = rule.value.description
+          source_addresses      = rule.value.source_addresses
+          source_ip_groups      = rule.value.source_ip_groups
+          destination_addresses = rule.value.destination_addresses
+          destination_urls      = rule.value.destination_urls
+          destination_fqdns     = rule.value.destination_fqdns
+          destination_fqdn_tags = rule.value.destination_fqdn_tags
+          terminate_tls         = rule.value.terminate_tls
+          web_categories        = rule.value.web_categories
+
+          dynamic "protocols" {
+            for_each = rule.value.protocols
+            content {
+              type = protocols.value.type
+              port = protocols.value.port
+            }
+          }
+        }
       }
-      protocols {
-        type = "Https"
-        port = 443
-      }
-      source_addresses  = ["10.0.0.1"]
-      destination_fqdns = ["*.microsoft.com"]
     }
   }
 
-  network_rule_collection {
-    name     = "network_rule_collection1"
-    priority = 400
-    action   = "Deny"
-    rule {
-      name                  = "network_rule_collection1_rule1"
-      protocols             = ["TCP", "UDP"]
-      source_addresses      = ["10.0.0.1"]
-      destination_addresses = ["192.168.1.1", "192.168.1.2"]
-      destination_ports     = ["80", "1000-2000"]
+  dynamic "nat_rule_collection" {
+    for_each = each.value.nat_rule_collection
+    content {
+      name     = nat_rule_collection.value.name
+      action   = title(nat_rule_collection.value.action)
+      priority = nat_rule_collection.value.priority
+
+      dynamic "rule" {
+        for_each = nat_rule_collection.value.rule
+        content {
+          name                = rule.value.name
+          description         = rule.value.description
+          protocols           = rule.value.protocols
+          source_addresses    = rule.value.source_addresses
+          source_ip_groups    = rule.value.source_ip_groups
+          destination_address = rule.value.destination_address
+          destination_ports   = rule.value.destination_ports
+          translated_address  = rule.value.translated_address
+          translated_fqdn     = rule.value.translated_fqdn
+          translated_port     = rule.value.translated_port
+        }
+      }
     }
   }
 
-  nat_rule_collection {
-    name     = "nat_rule_collection1"
-    priority = 300
-    action   = "Dnat"
-    rule {
-      name                = "nat_rule_collection1_rule1"
-      protocols           = ["TCP", "UDP"]
-      source_addresses    = ["10.0.0.1", "10.0.0.2"]
-      destination_address = "192.168.1.1"
-      destination_ports   = ["80"]
-      translated_address  = "192.168.0.1"
-      translated_port     = "8080"
+  dynamic "network_rule_collection" {
+    for_each = each.value.network_rule_collection
+    content {
+      name     = network_rule_collection.value.name
+      action   = network_rule_collection.value.action
+      priority = network_rule_collection.value.priority
+
+      dynamic "rule" {
+        for_each = network_rule_collection.value.rule
+        content {
+          name                  = rule.value.name
+          description           = rule.value.description
+          protocols             = rule.value.protocols
+          source_addresses      = rule.value.source_addresses
+          source_ip_groups      = rule.value.source_ip_groups
+          destination_addresses = rule.value.destination_addresses
+          destination_ports     = rule.value.destination_ports
+          destination_ip_groups = rule.value.destination_ip_groups
+          destination_fqdns     = rule.value.destination_fqdns
+        }
+      }
     }
   }
 }
@@ -178,7 +216,7 @@ No modules.
 | Name | Type |
 |------|------|
 | [azurerm_firewall_policy.firewall_policy](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/firewall_policy) | resource |
-| [azurerm_firewall_policy_rule_collection_group.rule_collection_group](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/firewall_policy_rule_collection_group) | resource |
+| [azurerm_firewall_policy_rule_collection_group.rule_collection_groups](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/firewall_policy_rule_collection_group) | resource |
 
 ## Inputs
 
@@ -196,6 +234,7 @@ No modules.
 | <a name="input_name"></a> [name](#input\_name) | The name for the resources | `string` | n/a | yes |
 | <a name="input_private_ip_ranges"></a> [private\_ip\_ranges](#input\_private\_ip\_ranges) | A list of IP addresses for the private policy | `list(string)` | `null` | no |
 | <a name="input_rg_name"></a> [rg\_name](#input\_rg\_name) | The name of the resource group the Azure firewall resides within | `string` | n/a | yes |
+| <a name="input_rule_collection_groups"></a> [rule\_collection\_groups](#input\_rule\_collection\_groups) | The rule collection groups to be assigned to the firewall polices | <pre>list(object({<br>    create_and_attach_rule_collection = optional(bool, true)<br>    name                              = string<br>    firewall_policy_id                = optional(string, null)<br>    priority                          = number<br>    application_rule_collection = optional(list(object({<br>      name     = optional(string)<br>      action   = optional(string)<br>      priority = optional(number)<br>      rule = optional(list(object({<br>        name        = optional(string)<br>        description = optional(string)<br>        protocols = optional(list(object({<br>          type = optional(string)<br>          port = optional(string)<br>        })))<br>        source_addresses      = optional(list(string))<br>        source_ip_groups      = optional(list(string))<br>        destination_addresses = optional(list(string))<br>        destination_urls      = optional(list(string))<br>        destination_fqdns     = optional(list(string))<br>        destination_fqdn_tags = optional(list(string))<br>        terminate_tls         = optional(bool)<br>        web_categories        = optional(list(string))<br>      })))<br>    })))<br>    nat_rule_collection = optional(list(object({<br>      name     = optional(string)<br>      action   = optional(string)<br>      priority = optional(number)<br>      rule = optional(list(object({<br>        name                = optional(string)<br>        description         = optional(string)<br>        protocols           = optional(list(string))<br>        source_addresses    = optional(list(string))<br>        source_ip_groups    = optional(list(string))<br>        destination_address = optional(string)<br>        destination_ports   = optional(list(string))<br>        translated_address  = optional(string)<br>        translated_fqdn     = optional(string)<br>        translated_port     = optional(number)<br>      })))<br>    })))<br>    network_rule_collection = optional(list(object({<br>      name     = optional(string)<br>      action   = optional(string)<br>      priority = optional(number)<br>      rule = optional(list(object({<br>        name                  = optional(string)<br>        description           = optional(string)<br>        protocols             = optional(list(string))<br>        source_addresses      = optional(list(string))<br>        source_ip_groups      = optional(list(string))<br>        destination_addresses = optional(list(string))<br>        destination_ports     = optional(list(string))<br>        destination_fqdns     = optional(list(string))<br>        destination_ip_groups = optional(list(string))<br>      })))<br>    })))<br>  }))</pre> | n/a | yes |
 | <a name="input_sku"></a> [sku](#input\_sku) | The sku of the policy, should match firewall, defaults to standard | `string` | `"Standard"` | no |
 | <a name="input_sql_redirect_allowed"></a> [sql\_redirect\_allowed](#input\_sql\_redirect\_allowed) | Whether SQL redirect is allowed in the policy | `bool` | `false` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | The tags for the resources | `map(string)` | n/a | yes |
