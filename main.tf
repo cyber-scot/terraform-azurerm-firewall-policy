@@ -102,57 +102,95 @@ resource "azurerm_firewall_policy" "firewall_policy" {
   }
 }
 
-resource "azurerm_firewall_policy_rule_collection_group" "rule_collection_group" {
-  name               = var.default_rule_collection_group_name != null ? var.default_rule_collection_group_name : "fwrcg-${var.name}"
-  firewall_policy_id = azurerm_firewall_policy.firewall_policy.id
-  priority           = var.default_rule_collection_group_priority
+resource "azurerm_firewall_policy_rule_collection_group" "rule_collection_groups" {
+
+  for_each           = { for k, v in var.rule_collection_groups : k => v if v.create_and_attach_rule_collection == true }
+  name               = each.value.name
+  firewall_policy_id = each.value.firewall_policy_id != null ? each.value.firewall_policy_id : azurerm_firewall_policy.firewall_policy.id
+  priority           = each.value.priority
 
 
 
-  application_rule_collection {
-    name     = "app_rule_collection1"
-    priority = 500
-    action   = "Deny"
-    rule {
-      name = "app_rule_collection1_rule1"
-      protocols {
-        type = "Http"
-        port = 80
+  dynamic "application_rule_collection" {
+    for_each = each.value.application_rule_collection
+    content {
+      name     = application_rule_collection.value.name
+      action   = application_rule_collection.value.action
+      priority = application_rule_collection.value.priority
+
+
+      dynamic "rule" {
+        for_each = application_rule_collection.value.rule
+        content {
+          name                  = rule.value.name
+          description           = rule.value.description
+          source_addresses      = rule.value.source_addresses
+          source_ip_groups      = rule.value.source_ip_groups
+          destination_addresses = rule.value.destination_addresses
+          destination_urls      = rule.value.destination_urls
+          destination_fqdns     = rule.value.destination_fqdns
+          destination_fqdn_tags = rule.value.destination_fqdn_tags
+          terminate_tls         = rule.value.terminate_tls
+          web_categories        = rule.value.web_categories
+
+          dynamic "protocols" {
+            for_each = rule.value.protocols
+            content {
+              type = protocols.value.type
+              port = protocols.value.port
+            }
+          }
+        }
       }
-      protocols {
-        type = "Https"
-        port = 443
-      }
-      source_addresses  = ["10.0.0.1"]
-      destination_fqdns = ["*.microsoft.com"]
     }
   }
 
-  network_rule_collection {
-    name     = "network_rule_collection1"
-    priority = 400
-    action   = "Deny"
-    rule {
-      name                  = "network_rule_collection1_rule1"
-      protocols             = ["TCP", "UDP"]
-      source_addresses      = ["10.0.0.1"]
-      destination_addresses = ["192.168.1.1", "192.168.1.2"]
-      destination_ports     = ["80", "1000-2000"]
+  dynamic "nat_rule_collection" {
+    for_each = each.value.nat_rule_collection
+    content {
+      name     = nat_rule_collection.value.name
+      action   = title(nat_rule_collection.value.action)
+      priority = nat_rule_collection.value.priority
+
+      dynamic "rule" {
+        for_each = nat_rule_collection.value.rule
+        content {
+          name                = rule.value.name
+          description         = rule.value.description
+          protocols           = rule.value.protocols
+          source_addresses    = rule.value.source_addresses
+          source_ip_groups    = rule.value.source_ip_groups
+          destination_address = rule.value.destination_address
+          destination_ports   = rule.value.destination_ports
+          translated_address  = rule.value.translated_address
+          translated_fqdn     = rule.value.translated_fqdn
+          translated_port     = rule.value.translated_port
+        }
+      }
     }
   }
 
-  nat_rule_collection {
-    name     = "nat_rule_collection1"
-    priority = 300
-    action   = "Dnat"
-    rule {
-      name                = "nat_rule_collection1_rule1"
-      protocols           = ["TCP", "UDP"]
-      source_addresses    = ["10.0.0.1", "10.0.0.2"]
-      destination_address = "192.168.1.1"
-      destination_ports   = ["80"]
-      translated_address  = "192.168.0.1"
-      translated_port     = "8080"
+  dynamic "network_rule_collection" {
+    for_each = each.value.network_rule_collection
+    content {
+      name     = network_rule_collection.value.name
+      action   = network_rule_collection.value.action
+      priority = network_rule_collection.value.priority
+
+      dynamic "rule" {
+        for_each = network_rule_collection.value.rule
+        content {
+          name                  = rule.value.name
+          description           = rule.value.description
+          protocols             = rule.value.protocols
+          source_addresses      = rule.value.source_addresses
+          source_ip_groups      = rule.value.source_ip_groups
+          destination_addresses = rule.value.destination_addresses
+          destination_ports     = rule.value.destination_ports
+          destination_ip_groups = rule.value.destination_ip_groups
+          destination_fqdns     = rule.value.destination_fqdns
+        }
+      }
     }
   }
 }

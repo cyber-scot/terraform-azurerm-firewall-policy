@@ -136,3 +136,68 @@ variable "tls_certificate" {
   }))
   default = null
 }
+
+
+variable "rule_collection_groups" {
+  description = "The rule collection groups to be assigned to the firewall polices"
+  type = list(object({
+    create_and_attach_rule_collection = optional(bool, true)
+    name                              = string
+    firewall_policy_id                = optional(string, null)
+    priority                          = number
+    application_rule_collection = optional(list(object({
+      name     = optional(string)
+      action   = optional(string)
+      priority = optional(number)
+      rule = optional(list(object({
+        name        = optional(string)
+        description = optional(string)
+        protocols = optional(list(object({
+          type = optional(string)
+          port = optional(string)
+        })))
+        source_addresses      = optional(list(string))
+        source_ip_groups      = optional(list(string))
+        destination_addresses = optional(list(string))
+        destination_urls      = optional(list(string))
+        destination_fqdns     = optional(list(string))
+        destination_fqdn_tags = optional(list(string))
+        terminate_tls         = optional(bool)
+        web_categories        = optional(list(string))
+      })))
+    })))
+    nat_rule_collection = optional(list(object({
+      name     = optional(string)
+      action   = optional(string)
+      priority = optional(number)
+      rule = optional(list(object({
+        name                = optional(string)
+        description         = optional(string)
+        protocols           = optional(list(string))
+        source_addresses    = optional(list(string))
+        source_ip_groups    = optional(list(string))
+        destination_address = optional(string)
+        destination_ports   = optional(list(string))
+        translated_address  = optional(string)
+        translated_fqdn     = optional(string)
+        translated_port     = optional(number)
+      })))
+    })))
+    network_rule_collection = optional(list(object({
+      name     = optional(string)
+      action   = optional(string)
+      priority = optional(number)
+      rule = optional(list(object({
+        name                  = optional(string)
+        description           = optional(string)
+        protocols             = optional(list(string))
+        source_addresses      = optional(list(string))
+        source_ip_groups      = optional(list(string))
+        destination_addresses = optional(list(string))
+        destination_ports     = optional(list(string))
+        destination_fqdns     = optional(list(string))
+        destination_ip_groups = optional(list(string))
+      })))
+    })))
+  }))
+}
