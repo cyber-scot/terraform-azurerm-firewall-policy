@@ -253,3 +253,4 @@ No modules.
 | <a name="output_firewall_policy_name"></a> [firewall\_policy\_name](#output\_firewall\_policy\_name) | The name of the Firewall Policy. |
 | <a name="output_firewall_policy_rule_collection_groups"></a> [firewall\_policy\_rule\_collection\_groups](#output\_firewall\_policy\_rule\_collection\_groups) | A list of references to Firewall Policy Rule Collection Groups that belong to this Firewall Policy. |
 | <a name="output_firewall_policy_tags"></a> [firewall\_policy\_tags](#output\_firewall\_policy\_tags) | The tags of the Firewall Policy. |
+| <a name="output_rule_collection_groups"></a> [rule\_collection\_groups](#output\_rule\_collection\_groups) | A map of the rule collection groups associated with the firewall policy. |
