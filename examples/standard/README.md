@@ -68,43 +68,11 @@ module "firewall_policy" {
       firewall_policy_id = null # Replace with a specific firewall policy ID if needed
       priority           = 100
 
-      application_rule_collection = [
-        {
-          name     = "appRuleCollection1"
-          action   = "Allow"
-          priority = 100
-          rule = [
-            {
-              name        = "appRule1"
-              description = "Example application rule"
-              protocols = [
-                {
-                  type = "Http"
-                  port = "80"
-                },
-                {
-                  type = "Https"
-                  port = "443"
-                }
-              ]
-              source_addresses      = ["10.0.0.0/24"]
-              source_ip_groups      = [] # Replace with source IP group references if available
-              destination_addresses = [] # Replace with destination addresses if needed
-              destination_urls      = ["www.example.com"]
-              destination_fqdns     = [] # Replace with FQDNs if needed
-              destination_fqdn_tags = [] # Replace with FQDN tags if needed
-              terminate_tls         = false
-              web_categories        = [] # Replace with web categories if needed
-            }
-          ]
-        }
-      ]
-
-      nat_rule_collection = [
+            nat_rule_collection = [
         {
           name     = "natRuleCollection1"
           action   = "Dnat"
-          priority = 200
+          priority = 100
           rule = [
             {
               name                = "natRule1"
@@ -126,7 +94,7 @@ module "firewall_policy" {
         {
           name     = "networkRuleCollection1"
           action   = "Allow"
-          priority = 300
+          priority = 200
           rule = [
             {
               name                  = "networkRule1"
@@ -138,6 +106,38 @@ module "firewall_policy" {
               destination_ports     = ["1000", "2000"]
               destination_ip_groups = [] # Replace with destination IP group references if available
               destination_fqdns     = [] # Replace with FQDNs if needed
+            }
+          ]
+        }
+      ]
+
+      application_rule_collection = [
+        {
+          name     = "appRuleCollection1"
+          action   = "Allow"
+          priority = 300
+          rule = [
+            {
+              name        = "appRule1"
+              description = "Example application rule"
+              protocols = [
+                {
+                  type = "Http"
+                  port = "80"
+                },
+                {
+                  type = "Https"
+                  port = "443"
+                }
+              ]
+              source_addresses      = ["10.0.0.0/24"]
+              source_ip_groups      = []
+              destination_addresses = []
+              destination_urls      = [] # Premium only
+              destination_fqdns     = []
+              destination_fqdn_tags = ["AzureBackup"]
+              terminate_tls         = false # Premium only
+              web_categories        = [] # Replace with web categories if needed # Premium only
             }
           ]
         }
